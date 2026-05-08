@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lenis smooth scroll */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+:root {
+  --background: #0A0A0B;
+  --surface: #111114;
+  --foreground: #EDEDED;
+  --text-secondary: #9A9A9F;
+  --text-muted: #52525A;
+  --accent: #00D4FF;
+  --divider: #1F1F23;
+  --border: #2A2A2F;
+  --green: #10B981;
+  --yellow: #F59E0B;
+  --red: #EF4444;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--foreground);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glow utilities */
+.glow-accent {
+  box-shadow: 0 0 24px rgba(0, 212, 255, 0.3);
+}
+
+.glow-accent-subtle {
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.15);
+}
+
+.text-glow-accent {
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+/* Blinking cursor for terminal effect */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}

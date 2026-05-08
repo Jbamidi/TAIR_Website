@@ -1,0 +1,30 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 200 240"
+  fill="none"
+  stroke="#00D4FF"
+  stroke-width="8"
+  stroke-linecap="square"
+  stroke-linejoin="miter"
+  width="32"
+  height="32"
+>
+  <circle cx="40" cy="40" r="8" fill="#00D4FF" stroke="none" />
+  <path
+    d="M 40 40
+       L 160 40
+       L 160 80
+       L 40 80
+       L 40 120
+       L 160 120
+       L 160 160
+       L 40 160
+       L 40 200
+       L 150 200"
+  />
+  <path
+    d="M 150 188 L 170 200 L 150 212 Z"
+    fill="#00D4FF"
+    stroke="none"
+  />
+</svg>

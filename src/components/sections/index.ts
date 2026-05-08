@@ -1,0 +1,9 @@
+export { Navbar } from "./Navbar";
+export { Hero } from "./Hero";
+export { Problem } from "./Problem";
+export { HowItWorks } from "./HowItWorks";
+export { Platform } from "./Platform";
+export { WhyTAIR } from "./WhyTAIR";
+export { Team } from "./Team";
+export { Contact } from "./Contact";
+export { Footer } from "./Footer";

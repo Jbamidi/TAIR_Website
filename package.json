@@ -1,0 +1,41 @@
+{
+  "name": "website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@react-three/drei": "^9.117.0",
+    "@react-three/fiber": "^8.17.0",
+    "@react-three/postprocessing": "^2.16.0",
+    "framer-motion": "^11.11.0",
+    "gsap": "^3.12.5",
+    "lenis": "^1.1.18",
+    "leva": "^0.9.35",
+    "lucide-react": "^0.460.0",
+    "next": "^14.2.18",
+    "postprocessing": "^6.36.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-intersection-observer": "^9.13.0",
+    "three": "^0.170.0",
+    "tunnel-rat": "^0.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.170.0",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^8",
+    "eslint-config-next": "^14.2.18",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
