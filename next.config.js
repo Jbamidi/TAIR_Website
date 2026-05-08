@@ -4,7 +4,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: process.env.GITHUB_ACTIONS ? "/TAIR_Website" : "",
   typescript: {
     ignoreBuildErrors: true,
   },
