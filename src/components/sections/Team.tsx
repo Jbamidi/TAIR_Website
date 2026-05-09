@@ -31,7 +31,17 @@ export function Team() {
               <div className="flex items-start gap-5">
                 {/* TODO: Replace with actual photo at /team/jashwanth.jpg */}
                 <div className="w-16 h-16 rounded-lg bg-surface border border-border flex-shrink-0 flex items-center justify-center overflow-hidden">
-                  <span className="font-mono text-accent text-lg font-bold">
+                  <img
+                    src="/team/jashwanth.jpg"
+                    alt="Jashwanth Bamidi"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to initials if photo isn't there yet
+                      (e.target as HTMLElement).style.display = 'none';
+                      (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <span className="font-mono text-accent text-lg font-bold hidden">
                     JB
                   </span>
                 </div>
@@ -49,9 +59,10 @@ export function Team() {
                     Analog circuits, RISC-V CPU design, FPGA computer vision.
                     Leads PCB design at Eco Illini and Illini EV Concept.
                   </p>
-                  {/* TODO: Replace href with actual LinkedIn URL */}
                   <a
-                    href="#"
+                    href="https://www.linkedin.com/in/jashwanthbamidi/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-block mt-3 text-xs font-mono text-muted hover:text-accent transition-colors duration-200"
                   >
                     → linkedin
