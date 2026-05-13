@@ -98,17 +98,19 @@ export function Team() {
                     Co-founder · Software & AI
                   </p>
                   <p className="text-xs text-secondary mt-1">
-                    Network and Digital Technology, UC Santa Cruz
+                    Sr. Associate Software Engineer, Workday
                   </p>
                   <p className="text-sm text-secondary mt-3 leading-relaxed">
                     Cloud infrastructure, multi-agent LLM orchestration, and ROS2 SLAM. 
                     Architects the autonomous scanning pipeline and warehouse data reconciliation engine.
                   </p>
                   <a
-                    href="mailto:hemalreddy1@gmail.com"
+                    href="https://www.linkedin.com/in/hemalreddy/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-block mt-3 text-xs font-mono text-muted hover:text-accent transition-colors duration-200"
                   >
-                    → email
+                    → linkedin
                   </a>
                 </div>
               </div>
