@@ -72,20 +72,44 @@ export function Team() {
             </Card>
           </motion.div>
 
-          {/* TODO: Fill in second founder details here */}
+          {/* Founder 2 — Hemal */}
           <motion.div variants={fadeInUp}>
-            <Card className="h-full opacity-50 border-dashed">
+            <Card className="h-full">
               <div className="flex items-start gap-5">
-                <div className="w-16 h-16 rounded-lg bg-surface border border-border border-dashed flex-shrink-0 flex items-center justify-center">
-                  <Plus size={20} className="text-muted" />
+                <div className="w-16 h-16 rounded-lg bg-surface border border-border flex-shrink-0 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/team/hemal.jpg"
+                    alt="Hemal Reddy Bhaveen"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                      (e.target as HTMLElement).nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <span className="font-mono text-accent text-lg font-bold hidden">
+                    HB
+                  </span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-muted">
-                    Second founder — TBA
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Hemal Reddy Bhaveen
                   </h3>
-                  <p className="text-sm text-muted mt-3 leading-relaxed">
-                    Co-founder details to be added.
+                  <p className="text-sm text-accent font-mono mt-0.5">
+                    Co-founder · Software & AI
                   </p>
+                  <p className="text-xs text-secondary mt-1">
+                    Network and Digital Technology, UC Santa Cruz
+                  </p>
+                  <p className="text-sm text-secondary mt-3 leading-relaxed">
+                    Cloud infrastructure, multi-agent LLM orchestration, and ROS2 SLAM. 
+                    Architects the autonomous scanning pipeline and warehouse data reconciliation engine.
+                  </p>
+                  <a
+                    href="mailto:hemalreddy1@gmail.com"
+                    className="inline-block mt-3 text-xs font-mono text-muted hover:text-accent transition-colors duration-200"
+                  >
+                    → email
+                  </a>
                 </div>
               </div>
             </Card>
