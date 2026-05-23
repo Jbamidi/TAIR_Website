@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useCallback } from "react";
+import { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Instances, Instance } from "@react-three/drei";
 import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
@@ -8,14 +8,18 @@ import * as THREE from "three";
 import { useInView } from "react-intersection-observer";
 
 /*
-  Animation phases (driven by cycleProgress 0→1 over ~12s):
+  Single-aisle mission (driven by phase 0→1 over ~20s):
   0.00–0.10  idle on dock
   0.10–0.20  liftoff
-  0.20–0.55  fly to racks + scan
-  0.55–0.80  return to dock
-  0.80–0.92  landing
-  0.92–1.00  idle on dock (cooldown)
+  0.20–0.30  fly to target aisle entrance
+  0.30–0.55  scan aisle (one pass, left→right)
+  0.55–0.70  fly back to dock (hovering height)
+  0.70–0.85  landing
+  0.85–1.00  idle on dock (cooldown)
 */
+
+const AISLE_ROWS = [-3.5, -1.5, 0.5, 2.5];
+const DOCK_POS = new THREE.Vector3(-5, 0, -4.5);
 
 function GridFloor() {
   const grid = useMemo(() => {
@@ -29,8 +33,7 @@ function GridFloor() {
 function Racks() {
   const positions = useMemo(() => {
     const p: [number, number, number][] = [];
-    const rowZ = [-3.5, -1.5, 0.5, 2.5];
-    for (const z of rowZ) {
+    for (const z of AISLE_ROWS) {
       for (let i = 0; i < 5; i++) {
         p.push([i * 1.4 - 2.8, 0.45, z]);
       }
@@ -52,8 +55,7 @@ function Racks() {
 function ShelfDividers() {
   const positions = useMemo(() => {
     const p: { pos: [number, number, number] }[] = [];
-    const rowZ = [-3.5, -1.5, 0.5, 2.5];
-    for (const z of rowZ) {
+    for (const z of AISLE_ROWS) {
       for (let i = 0; i < 5; i++) {
         const x = i * 1.4 - 2.8;
         p.push({ pos: [x, 0.2, z] });
@@ -75,15 +77,12 @@ function ShelfDividers() {
   );
 }
 
-const DOCK_POS = new THREE.Vector3(-5, 0, -4.5);
-const SCAN_CENTER = new THREE.Vector3(0, 1.2, -0.5);
-
 function DockingStation({ phase }: { phase: number }) {
   const glowRef = useRef<THREE.PointLight>(null);
 
   useFrame(() => {
     if (!glowRef.current) return;
-    const docked = phase < 0.10 || phase > 0.88;
+    const docked = phase < 0.10 || phase > 0.82;
     glowRef.current.intensity = docked ? 2.5 : 0.5;
     glowRef.current.color.set(docked ? "#10B981" : "#2A2A2F");
   });
@@ -107,22 +106,11 @@ function DockingStation({ phase }: { phase: number }) {
   );
 }
 
-const SCAN_WAYPOINTS: THREE.Vector3[] = (() => {
-  const pts: THREE.Vector3[] = [];
-  const rowZ = [-3.5, -1.5, 0.5, 2.5];
-  for (let r = 0; r < rowZ.length; r++) {
-    if (r % 2 === 0) {
-      pts.push(new THREE.Vector3(-3.5, 1.2, rowZ[r]));
-      pts.push(new THREE.Vector3(3.5, 1.2, rowZ[r]));
-    } else {
-      pts.push(new THREE.Vector3(3.5, 1.2, rowZ[r]));
-      pts.push(new THREE.Vector3(-3.5, 1.2, rowZ[r]));
-    }
-  }
-  return pts;
-})();
+function smoothstep(t: number) {
+  return t * t * (3 - 2 * t);
+}
 
-function Drone({ phase }: { phase: number }) {
+function Drone({ phase, aisleZ }: { phase: number; aisleZ: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const rotorRefs = useRef<THREE.Mesh[]>([]);
   const scanRef = useRef<THREE.Mesh>(null);
@@ -133,6 +121,10 @@ function Drone({ phase }: { phase: number }) {
     { pos: [0.18, 0, -0.18] as [number, number, number] },
     { pos: [-0.18, 0, -0.18] as [number, number, number] },
   ], []);
+
+  const aisleStart = useMemo(() => new THREE.Vector3(-3.5, 1.2, aisleZ), [aisleZ]);
+  const aisleEnd = useMemo(() => new THREE.Vector3(3.5, 1.2, aisleZ), [aisleZ]);
+  const dockHover = useMemo(() => new THREE.Vector3(DOCK_POS.x, 1.2, DOCK_POS.z), []);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -146,49 +138,39 @@ function Drone({ phase }: { phase: number }) {
     if (phase < 0.10) {
       pos = DOCK_POS.clone();
       pos.y = 0.15;
-      rotorSpeed = 0;
     } else if (phase < 0.20) {
-      const liftT = (phase - 0.10) / 0.10;
-      const eased = liftT * liftT * (3 - 2 * liftT);
+      const e = smoothstep((phase - 0.10) / 0.10);
       pos = DOCK_POS.clone();
-      pos.y = THREE.MathUtils.lerp(0.15, 1.2, eased);
-      rotorSpeed = THREE.MathUtils.lerp(0.1, 0.8, eased);
-    } else if (phase < 0.25) {
-      const flyT = (phase - 0.20) / 0.05;
-      const eased = flyT * flyT * (3 - 2 * flyT);
+      pos.y = THREE.MathUtils.lerp(0.15, 1.2, e);
+      rotorSpeed = THREE.MathUtils.lerp(0.05, 0.4, e);
+    } else if (phase < 0.30) {
+      const e = smoothstep((phase - 0.20) / 0.10);
       pos = new THREE.Vector3();
-      pos.lerpVectors(new THREE.Vector3(DOCK_POS.x, 1.2, DOCK_POS.z), SCAN_WAYPOINTS[0], eased);
-      rotorSpeed = 0.8;
+      pos.lerpVectors(dockHover, aisleStart, e);
+      rotorSpeed = 0.4;
     } else if (phase < 0.55) {
-      const scanT = (phase - 0.25) / 0.30;
-      const totalLen = SCAN_WAYPOINTS.length - 1;
-      const idx = Math.min(Math.floor(scanT * totalLen), totalLen - 1);
-      const segT = (scanT * totalLen) - idx;
+      const scanT = (phase - 0.30) / 0.25;
       pos = new THREE.Vector3();
-      pos.lerpVectors(SCAN_WAYPOINTS[idx], SCAN_WAYPOINTS[idx + 1], segT);
-      rotorSpeed = 0.8;
+      pos.lerpVectors(aisleStart, aisleEnd, scanT);
+      rotorSpeed = 0.4;
       scanOpacity = 0.12;
-    } else if (phase < 0.80) {
-      const retT = (phase - 0.55) / 0.25;
-      const eased = retT * retT * (3 - 2 * retT);
-      const lastWP = SCAN_WAYPOINTS[SCAN_WAYPOINTS.length - 1];
+    } else if (phase < 0.70) {
+      const e = smoothstep((phase - 0.55) / 0.15);
       pos = new THREE.Vector3();
-      pos.lerpVectors(lastWP, new THREE.Vector3(DOCK_POS.x, 1.2, DOCK_POS.z), eased);
-      rotorSpeed = 0.8;
-    } else if (phase < 0.92) {
-      const landT = (phase - 0.80) / 0.12;
-      const eased = landT * landT * (3 - 2 * landT);
+      pos.lerpVectors(aisleEnd, dockHover, e);
+      rotorSpeed = 0.4;
+    } else if (phase < 0.85) {
+      const e = smoothstep((phase - 0.70) / 0.15);
       pos = DOCK_POS.clone();
-      pos.y = THREE.MathUtils.lerp(1.2, 0.15, eased);
-      rotorSpeed = THREE.MathUtils.lerp(0.8, 0, eased);
+      pos.y = THREE.MathUtils.lerp(1.2, 0.15, e);
+      rotorSpeed = THREE.MathUtils.lerp(0.4, 0, e);
     } else {
       pos = DOCK_POS.clone();
       pos.y = 0.15;
-      rotorSpeed = 0;
     }
 
     if (rotorSpeed > 0) {
-      pos.y += Math.sin(t * 3) * 0.015;
+      pos.y += Math.sin(t * 2) * 0.01;
     }
 
     g.position.copy(pos);
@@ -237,26 +219,27 @@ function Drone({ phase }: { phase: number }) {
   );
 }
 
-function ScanMarkers({ phase }: { phase: number }) {
+function ScanMarkers({ phase, aisleZ }: { phase: number; aisleZ: number }) {
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
   const positions = useMemo(() => {
     const p: [number, number, number][] = [];
-    const rowZ = [-3.5, -1.5, 0.5, 2.5];
-    for (const z of rowZ) {
-      for (let i = 0; i < 5; i++) {
-        p.push([i * 1.4 - 2.8, 0.95, z]);
-      }
+    for (let i = 0; i < 5; i++) {
+      p.push([i * 1.4 - 2.8, 0.95, aisleZ]);
     }
     return p;
-  }, []);
+  }, [aisleZ]);
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    const scanning = phase >= 0.25 && phase < 0.55;
-    const scanT = scanning ? (phase - 0.25) / 0.30 : 0;
-    const revealCount = scanning ? Math.floor(scanT * positions.length) : (phase >= 0.55 ? positions.length : 0);
+    const scanning = phase >= 0.30 && phase < 0.55;
+    const scanT = scanning ? (phase - 0.30) / 0.25 : 0;
+    const revealCount = scanning
+      ? Math.floor(scanT * positions.length)
+      : phase >= 0.55 && phase < 0.85
+        ? positions.length
+        : 0;
     const t = state.clock.elapsedTime;
 
     positions.forEach((pos, i) => {
@@ -274,7 +257,7 @@ function ScanMarkers({ phase }: { phase: number }) {
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, 20]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, 5]}>
       <sphereGeometry args={[0.06, 6, 6]} />
       <meshBasicMaterial color="#00D4FF" toneMapped={false} />
     </instancedMesh>
@@ -290,7 +273,8 @@ function Effects() {
   );
 }
 
-function Scene({ phase }: { phase: number }) {
+function Scene({ phase, aisleIndex }: { phase: number; aisleIndex: number }) {
+  const aisleZ = AISLE_ROWS[aisleIndex % AISLE_ROWS.length];
   return (
     <>
       <ambientLight intensity={0.5} />
@@ -298,8 +282,8 @@ function Scene({ phase }: { phase: number }) {
       <Racks />
       <ShelfDividers />
       <DockingStation phase={phase} />
-      <Drone phase={phase} />
-      <ScanMarkers phase={phase} />
+      <Drone phase={phase} aisleZ={aisleZ} />
+      <ScanMarkers phase={phase} aisleZ={aisleZ} />
       <OrbitControls
         enableZoom={false}
         enablePan={false}
@@ -315,10 +299,11 @@ function Scene({ phase }: { phase: number }) {
 
 interface AgentDroneSceneProps {
   phase: number;
+  aisleIndex: number;
 }
 
-export function AgentDroneScene({ phase }: AgentDroneSceneProps) {
-  const { ref: inViewRef, inView } = useInView({ threshold: 0.05 });
+export function AgentDroneScene({ phase, aisleIndex }: AgentDroneSceneProps) {
+  const { ref: inViewRef, inView } = useInView({ threshold: 0.01, triggerOnce: true });
 
   return (
     <div ref={inViewRef} className="relative w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden border border-border bg-surface">
@@ -329,7 +314,7 @@ export function AgentDroneScene({ phase }: AgentDroneSceneProps) {
           gl={{ alpha: false, antialias: false, powerPreference: "high-performance" }}
           style={{ background: "#0A0A0B" }}
         >
-          <Scene phase={phase} />
+          <Scene phase={phase} aisleIndex={aisleIndex} />
         </Canvas>
       )}
       <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-md px-3 py-1.5 border border-border">

@@ -17,22 +17,53 @@ const AgentDroneScene = dynamic(
 );
 
 /*
-  Timeline (12s cycle, progress 0→1):
+  Timeline (20s cycle, progress 0→1):
   0.00  user message starts typing
   0.08  user message done → agent "deploying" reply
   0.10  drone lifts off
-  0.55  scan complete → agent result reply begins typing
-  0.70  agent result fully visible
-  0.92  drone docked, brief pause
-  1.00  reset
+  0.30  drone arrives at target aisle, scanning begins
+  0.55  scan complete → drone returns
+  0.60  agent result reply begins typing
+  0.78  agent result fully visible
+  0.85  drone landed
+  1.00  reset → next scenario
 */
 
-const USER_MSG = "Go check how many pallets of PHARMA-2104 are left on the shelves";
-const AGENT_DEPLOY = "Deploying drone to scan aisle C…";
-const AGENT_RESULT =
-  "Scan complete. 14 pallets of PHARMA-2104 located across 3 racks in aisle C. WMS record updated.";
+interface Scenario {
+  userMsg: string;
+  agentDeploy: string;
+  agentResult: string;
+  aisleIndex: number;
+}
 
-const CYCLE_DURATION = 14;
+const SCENARIOS: Scenario[] = [
+  {
+    userMsg: "Go check how many pallets of PHARMA-2104 are left on the shelves",
+    agentDeploy: "Deploying drone to scan aisle C…",
+    agentResult: "Scan complete. 14 pallets of PHARMA-2104 located across 3 racks in aisle C. WMS record updated.",
+    aisleIndex: 2,
+  },
+  {
+    userMsg: "Is there any COLD-CH-0891 left in cold storage aisle A?",
+    agentDeploy: "Routing drone to aisle A for cold storage scan…",
+    agentResult: "Scan complete. 8 pallets of COLD-CH-0891 found in aisle A, racks 2–4. Temperature within spec. WMS confirmed.",
+    aisleIndex: 0,
+  },
+  {
+    userMsg: "Verify the ELEC-BATT-512 shipment was shelved in aisle D",
+    agentDeploy: "Sending drone to verify aisle D inventory…",
+    agentResult: "Verified. 22 cases of ELEC-BATT-512 shelved across racks 1–3 in aisle D. Matches inbound manifest. WMS synced.",
+    aisleIndex: 3,
+  },
+  {
+    userMsg: "How many empty rack slots are open in aisle B right now?",
+    agentDeploy: "Dispatching drone to survey aisle B capacity…",
+    agentResult: "Survey complete. 7 of 15 rack slots empty in aisle B. Locations B-04, B-07 through B-12 available. Updated in WMS.",
+    aisleIndex: 1,
+  },
+];
+
+const CYCLE_DURATION = 20;
 
 interface ChatMessage {
   role: "user" | "agent";
@@ -96,7 +127,7 @@ function ChatBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
-function ChatPanel({ progress }: { progress: number }) {
+function ChatPanel({ progress, scenario }: { progress: number; scenario: Scenario }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -106,10 +137,10 @@ function ChatPanel({ progress }: { progress: number }) {
     if (progress >= 0.01) {
       const typingEnd = 0.08;
       const charProgress = Math.min(progress / typingEnd, 1);
-      const chars = Math.floor(charProgress * USER_MSG.length);
+      const chars = Math.floor(charProgress * scenario.userMsg.length);
       msgs.push({
         role: "user",
-        text: USER_MSG,
+        text: scenario.userMsg,
         visibleChars: chars,
         status: charProgress < 1 ? "typing" : "done",
       });
@@ -118,7 +149,7 @@ function ChatPanel({ progress }: { progress: number }) {
     if (progress >= 0.08 && progress < 0.10) {
       msgs.push({
         role: "agent",
-        text: AGENT_DEPLOY,
+        text: scenario.agentDeploy,
         visibleChars: 0,
         status: "typing",
       });
@@ -131,36 +162,36 @@ function ChatPanel({ progress }: { progress: number }) {
       );
       msgs.push({
         role: "agent",
-        text: AGENT_DEPLOY,
-        visibleChars: Math.floor(charProgress * AGENT_DEPLOY.length),
+        text: scenario.agentDeploy,
+        visibleChars: Math.floor(charProgress * scenario.agentDeploy.length),
         status: charProgress < 1 ? "typing" : "done",
       });
     }
 
-    if (progress >= 0.55 && progress < 0.58) {
+    if (progress >= 0.55 && progress < 0.60) {
       msgs.push({
         role: "agent",
-        text: AGENT_RESULT,
+        text: scenario.agentResult,
         visibleChars: 0,
         status: "typing",
       });
-    } else if (progress >= 0.58) {
-      const resultTypingStart = 0.58;
-      const resultTypingEnd = 0.75;
+    } else if (progress >= 0.60) {
+      const resultTypingStart = 0.60;
+      const resultTypingEnd = 0.78;
       const charProgress = Math.min(
         (progress - resultTypingStart) / (resultTypingEnd - resultTypingStart),
         1
       );
       msgs.push({
         role: "agent",
-        text: AGENT_RESULT,
-        visibleChars: Math.floor(charProgress * AGENT_RESULT.length),
+        text: scenario.agentResult,
+        visibleChars: Math.floor(charProgress * scenario.agentResult.length),
         status: charProgress < 1 ? "typing" : "done",
       });
     }
 
     setMessages(msgs);
-  }, [progress]);
+  }, [progress, scenario]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -208,14 +239,23 @@ export function AgentDemo() {
     triggerOnce: false,
   });
   const [progress, setProgress] = useState(0);
+  const [scenarioIdx, setScenarioIdx] = useState(0);
   const startTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
+  const lastCycleRef = useRef(0);
 
   const tick = useCallback(() => {
     const now = performance.now();
     if (startTimeRef.current === null) startTimeRef.current = now;
     const elapsed = (now - startTimeRef.current) / 1000;
+    const cycleNum = Math.floor(elapsed / CYCLE_DURATION);
     const p = (elapsed % CYCLE_DURATION) / CYCLE_DURATION;
+
+    if (cycleNum !== lastCycleRef.current) {
+      lastCycleRef.current = cycleNum;
+      setScenarioIdx(cycleNum % SCENARIOS.length);
+    }
+
     setProgress(p);
     rafRef.current = requestAnimationFrame(tick);
   }, []);
@@ -223,6 +263,7 @@ export function AgentDemo() {
   useEffect(() => {
     if (inView) {
       startTimeRef.current = null;
+      lastCycleRef.current = 0;
       rafRef.current = requestAnimationFrame(tick);
     } else {
       cancelAnimationFrame(rafRef.current);
@@ -230,6 +271,8 @@ export function AgentDemo() {
     }
     return () => cancelAnimationFrame(rafRef.current);
   }, [inView, tick]);
+
+  const scenario = SCENARIOS[scenarioIdx];
 
   return (
     <section id="agent" className="py-32 px-6" ref={sectionRef}>
@@ -256,10 +299,10 @@ export function AgentDemo() {
         <motion.div variants={fadeInUp}>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2">
-              <ChatPanel progress={progress} />
+              <ChatPanel progress={progress} scenario={scenario} />
             </div>
             <div className="lg:col-span-3">
-              <AgentDroneScene phase={progress} />
+              <AgentDroneScene phase={progress} aisleIndex={scenario.aisleIndex} />
             </div>
           </div>
         </motion.div>

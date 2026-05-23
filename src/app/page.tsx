@@ -6,9 +6,11 @@ import {
   Hero,
   Problem,
   HowItWorks,
+  DroneVision,
   Platform,
   AgentDemo,
   WhyTAIR,
+  Comparison,
   Team,
   Contact,
   Footer,
@@ -40,7 +42,11 @@ export default function Home() {
           <div className="border-t border-divider" />
           <AgentDemo />
           <div className="border-t border-divider" />
+          <DroneVision />
+          <div className="border-t border-divider" />
           <WhyTAIR />
+          <div className="border-t border-divider" />
+          <Comparison />
           <div className="border-t border-divider" />
           <Team />
           <div className="border-t border-divider" />
