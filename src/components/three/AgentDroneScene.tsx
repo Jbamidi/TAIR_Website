@@ -207,8 +207,8 @@ function Drone({ phase, aisleZ }: { phase: number; aisleZ: number }) {
           </mesh>
         </group>
       ))}
-      <mesh ref={scanRef} position={[0, -0.35, 0]} rotation={[Math.PI, 0, 0]}>
-        <coneGeometry args={[0.2, 0.7, 8, 1, true]} />
+      <mesh ref={scanRef} position={[0, -0.4, 0]}>
+        <coneGeometry args={[0.25, 0.7, 8, 1, true]} />
         <meshBasicMaterial color="#00D4FF" transparent opacity={0} toneMapped={false} side={THREE.DoubleSide} />
       </mesh>
       <mesh position={[0, -0.03, 0]}>
