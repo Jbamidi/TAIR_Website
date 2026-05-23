@@ -7,6 +7,7 @@ import {
   Problem,
   HowItWorks,
   Platform,
+  AgentDemo,
   WhyTAIR,
   Team,
   Contact,
@@ -36,6 +37,8 @@ export default function Home() {
           <HowItWorks />
           <div className="border-t border-divider" />
           <Platform />
+          <div className="border-t border-divider" />
+          <AgentDemo />
           <div className="border-t border-divider" />
           <WhyTAIR />
           <div className="border-t border-divider" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Zap, Radio, Plug } from "lucide-react";
+import { Zap, Radio, Plug, MessageSquare } from "lucide-react";
 import { Card, MonoText } from "@/components/ui";
 import { fadeInUp, staggerContainer, viewportOptions } from "@/lib/animations";
 import type { LucideIcon } from "lucide-react";
@@ -31,6 +31,12 @@ const differentiators: Differentiator[] = [
     description:
       "Corrected inventory pushes directly into Extensiv and other WMS platforms. No workflow changes for your team.",
   },
+  {
+    icon: MessageSquare,
+    title: "Natural-language control",
+    description:
+      "Chat with your warehouse through a LangGraph-powered agent. Ask inventory questions and get real-time answers backed by autonomous drone scans.",
+  },
 ];
 
 export function WhyTAIR() {
@@ -52,7 +58,7 @@ export function WhyTAIR() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {differentiators.map((d) => {
             const Icon = d.icon;
             return (
