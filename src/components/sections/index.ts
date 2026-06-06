@@ -9,4 +9,6 @@ export { WhyTAIR } from "./WhyTAIR";
 export { Comparison } from "./Comparison";
 export { Team } from "./Team";
 export { Contact } from "./Contact";
+export { ContactForm } from "./ContactForm";
+export { ProductsPreview } from "./ProductsPreview";
 export { Footer } from "./Footer";

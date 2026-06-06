@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -7,13 +9,49 @@ import { Logo } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { handleSmoothScroll } from "@/lib/smoothScroll";
+import { navLinks } from "@/lib/navigation";
 
-const navLinks = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Platform", href: "#platform" },
-  { label: "Team", href: "#team" },
-  { label: "Contact", href: "#contact" },
-];
+function NavLink({
+  href,
+  label,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const isHashLink = href.startsWith("#");
+  const isActive =
+    !isHashLink && (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  if (isHashLink) {
+    return (
+      <a
+        href={href}
+        onClick={(e) => {
+          handleSmoothScroll(e, href);
+          onNavigate?.();
+        }}
+        className="text-sm text-secondary hover:text-foreground transition-colors duration-200"
+      >
+        {label}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className={`text-sm transition-colors duration-200 ${
+        isActive ? "text-foreground" : "text-secondary hover:text-foreground"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -37,40 +75,27 @@ export function Navbar() {
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Logo size={28} />
           <span className="font-mono text-lg font-bold text-foreground tracking-tight">
             TAIR
           </span>
-        </a>
+        </Link>
 
-        {/* Desktop links — smooth scroll */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => handleSmoothScroll(e, link.href)}
-              className="text-sm text-secondary hover:text-foreground transition-colors duration-200"
-            >
-              {link.label}
-            </a>
+            <NavLink key={link.href} href={link.href} label={link.label} />
           ))}
         </div>
 
         <div className="hidden md:block">
           <MagneticButton>
-            <Button
-              onClick={(e) => handleSmoothScroll(e, "#contact")}
-              className="text-sm px-5 py-2"
-            >
+            <Button href="/contact" className="text-sm px-5 py-2">
               Request demo
             </Button>
           </MagneticButton>
         </div>
 
-        {/* Mobile hamburger */}
         <button
           className="md:hidden text-foreground cursor-pointer"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -80,7 +105,6 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -92,24 +116,17 @@ export function Navbar() {
           >
             <div className="px-6 py-4 flex flex-col gap-4">
               {navLinks.map((link) => (
-                <a
+                <NavLink
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-secondary hover:text-foreground transition-colors duration-200"
-                  onClick={(e) => {
-                    handleSmoothScroll(e, link.href);
-                    setMobileOpen(false);
-                  }}
-                >
-                  {link.label}
-                </a>
+                  label={link.label}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               ))}
               <Button
-                onClick={(e) => {
-                  handleSmoothScroll(e, "#contact");
-                  setMobileOpen(false);
-                }}
+                href="/contact"
                 className="text-sm w-full mt-2"
+                onClick={() => setMobileOpen(false)}
               >
                 Request demo
               </Button>

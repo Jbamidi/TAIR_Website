@@ -47,29 +47,52 @@ public/
     └── jashwanth.jpg         # TODO: Add founder photo
 ```
 
+## Pages
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Marketing home with cinematic hero and product preview |
+| `/products` | Full product catalog |
+| `/products/[slug]` | Individual product detail pages |
+| `/about` | Company story and team |
+| `/contact` | Contact form (submissions via Resend) |
+
+Product data lives in `src/lib/products.ts` — add or edit offerings there. Each product gets its own card (home + `/products`) and detail page at `/products/[slug]` automatically.
+
+Shared UI components for consistent theming:
+- `src/components/products/ProductCard.tsx` — card used on home, catalog, and related products
+- `src/components/layout/PageHeader.tsx` — page titles across About, Contact, Products
+- `src/components/layout/CTABanner.tsx` — demo/contact CTAs at page bottoms
+
+## Contact form setup
+
+The contact form posts to `/api/contact` and sends email via [Resend](https://resend.com).
+
+1. Copy `.env.example` to `.env.local`
+2. Add your `RESEND_API_KEY` from https://resend.com/api-keys
+3. Set `CONTACT_EMAIL_TO=321tair@gmail.com`
+4. Until `tairsystems.com` is verified in Resend, use `onboarding@resend.dev` as the sender
+
 ## Run Locally
 
 ```bash
 npm install
+cp .env.example .env.local   # then fill in RESEND_API_KEY
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Three Things to Change Before Going Live
+## Deployment (Vercel)
 
-1. **Founder photos** — Add `jashwanth.jpg` to `public/team/` and update the Team section to use `<Image>` with that path instead of the monogram placeholder.
-
-2. **Second founder card** — Search for `TODO` comments in `src/components/sections/Team.tsx` and fill in co-founder name, role, bio, photo, and LinkedIn URL.
-
-3. **Contact form backend** — The form currently uses `mailto:321tair@gmail.com`. For production, consider replacing with a form service (Formspree, Resend) or a Next.js API route.
-
-## Deployment
+GitHub Pages no longer works for this site — it uses server-side API routes for the contact form.
 
 ```bash
 npm run build   # Validate production build
 npx vercel      # Deploy to Vercel
 ```
+
+In Vercel project settings, add the same env vars from `.env.example`. Point `tairsystems.com` DNS to Vercel (update Cloudflare records).
 
 ## Design System
 
